@@ -1,16 +1,21 @@
-# LaterTogether — Companion App + Manual / Checkpoint Sync
+# LaterTogether — Companion App + Playback-Aware Sync
 
-**Version:** 0.2  
+**Version:** 0.1  
 **Status:** Draft specification  
-**Scope:** Mobile-first (**Android tablet** is the MVP compatibility target); playback assumed to occur in **third-party native apps** (e.g. Netflix), not inside LaterTogether’s player unless explicitly in scope. **Multiplatform** clients are planned; agreed stack choices are summarized in **§17**.
+**Scope:** **Android tablet only.** The companion runs **alongside** third-party players (e.g. streaming apps); playback is **not** assumed to occur inside LaterTogether unless explicitly added later. The client is a **native Kotlin** application to access **Android platform APIs** (notably **MediaSession** and, when needed, **AccessibilityService**). Message persistence uses **Supabase** (PostgreSQL and related Supabase features—see §13).
 
 ---
 
 ## 1. Product summary
 
-**LaterTogether** delivers **asynchronous, timestamp-anchored chat** for a shared piece of media: users send messages tied to **media time** (seconds from the start of a specific edition of content). When others watch the same content later, messages **surface at the corresponding moment**, similar in spirit to chat replay on live streams.
+**LaterTogether** provides **asynchronous, timestamp-anchored chat** for a shared piece of media: users send messages tied to **media time** (seconds from the start of a specific edition of content). When others watch the same content later, messages **surface at the corresponding moment**, analogous to chat replay on live streams.
 
-**Core constraint:** Third-party streaming apps do not expose playback state to arbitrary companion apps. This spec defines sync using **user-provided anchors**, **explicit session state** in LaterTogether, and **checkpoint / drift handling**—not reliance on OS-level “what Netflix is doing now” APIs.
+**Playback observation:** The app **reads current playback state and position** from the device using a **tiered strategy**:
+
+1. **Primary:** **`MediaSession` APIs** (and related platform surfaces that expose active session metadata: playback state, position when exposed, supported actions). This is the preferred path when the active media session reports usable information.
+2. **Fallback:** **`AccessibilityService`**, used when **`MediaSession` does not yield reliable position/state** for the app the user is watching. In that mode, the service may use **accessibility node tree content** (e.g. visible text for timecodes or player controls)—**not** **screen capture** or frame sampling of protected video (see §11.3). Subject to user consent, Play policy, and technical limits (DRM, overlays, OEM variance).
+
+When **neither** path gives a trustworthy signal, the product falls back to **explicit user checkpoints** (manual time entry / “Sync now”) and the **session estimation model** in §6—same recovery philosophy as before, but invoked only when automation cannot anchor.
 
 ---
 
@@ -19,20 +24,20 @@
 | ID | Goal |
 |----|------|
 | G1 | Anchor every chat message to **canonical media time** for a **canonical content identity**. |
-| G2 | Estimate **current media time** during a watch session with **acceptable error** for readable chat timing. |
-| G3 | Recover from **seek**, **pause**, **variable playback speed**, and **user drift** without silent failure. |
-| G4 | Optimize for **Android tablet** where browser extensions and cross-app playback introspection are unavailable. |
-| G5 | Keep an upgrade path for **optional assistive sync** (Accessibility, screen-assisted inference, WebView lane) without blocking MVP. |
+| G2 | Estimate **current media time** during a watch session with **acceptable error**, prioritizing **observed** signals from **MediaSession**, then **AccessibilityService**, then **manual** checkpoints. |
+| G3 | Recover from **seek**, **pause**, **variable playback speed**, and **drift** without silent failure; surface uncertainty and prompt for **resync** when confidence drops. |
+| G4 | Ship a **polished Android tablet** experience (split-screen, landscape, large layouts)—**no** requirement to share UI or logic with other platforms. |
+| G5 | Implement native integrations **in Kotlin** (foreground/coroutine boundaries, session callbacks, accessibility events) with **testable** domain logic separated from Android framework glue where practical. |
 
 ---
 
 ## 3. Non-goals (MVP)
 
-- Reading playback position directly from Netflix / Prime / Disney+ native SDKs (no supported API).
-- Guaranteed frame-accurate sync without user checkpoints.
-- TV / console / offline-download playback parity.
-- Replacing platform ToS compliance review (legal remains out of band).
-- **Live message feeds** — no WebSocket, SSE, or push-based delivery of newly posted messages as a required MVP feature; the MVP operates on **messages that already exist** with timestamps, loaded over **REST** (see §10.2, §13, §17).
+- **Multiplatform clients** (iOS, desktop, Flutter, web companion)—out of scope for this specification; only **Android tablet** is targeted.
+- Guaranteed **frame-accurate** sync without user checkpoints when OEM/app behavior hides position entirely.
+- Parity for **TV / console** or **offline-download** playback models unless explicitly added later.
+- Replacing **legal / ToS** review for accessibility capture or third-party apps—out of band.
+- **Supabase Realtime** (or other push-style delivery) for **new** messages—**not** required for **MVP**; clients **fetch** thread data on demand (see §10.2, §13). **Post-MVP:** keep schema and client layering compatible with subscribing later without a rewrite.
 
 ---
 
@@ -45,6 +50,7 @@
 | **Watch session** | A single continuous attempt to map wall-clock to media time for one user + one content key + optional breaks modeled explicitly. |
 | **Checkpoint** | User-provided or system-prompted observation linking **wall time** to **media time**, used to re-anchor or correct drift. |
 | **Edition** | A specific cut (region, director’s cut, remaster). Different runtimes may imply different editions; MVP may merge naively with user override. |
+| **Observed playhead** | Position/state derived from **MediaSession** or **AccessibilityService** (when implemented), as opposed to **extrapolated** `t_est` from anchors alone. |
 
 ---
 
@@ -63,7 +69,7 @@
 
 ### 5.3 Known limitations
 
-- Netflix and similar may not expose a public ID via share; **human-in-the-loop** selection is acceptable for MVP.
+- Many providers do not expose a stable public ID via share; **human-in-the-loop** selection remains acceptable.
 - Same title may map to **multiple editions**; later versions may add `editionId` or runtime fingerprint.
 
 ---
@@ -81,13 +87,16 @@ Implementations SHOULD persist:
 | `clockMode` | enum | `monotonic` preferred for elapsed math; document fallback. |
 | `sessionAnchorWall` | instant | Wall/monotonic instant when `baseMediaTime` was last set. |
 | `baseMediaTime` | number | Media time (seconds) at `sessionAnchorWall`. |
-| `playbackState` | enum | `playing` \| `paused`. |
+| `playbackState` | enum | `playing` \| `paused` — ideally from **observation** when available. |
 | `pausedAtMediaTime` | number \| null | Frozen media time when paused. |
-| `playbackRate` | number | Default `1.0`; user-settable (e.g. 0.75, 1.25). |
+| `playbackRate` | number | Default `1.0`; from user settings and/or observed hints when available. |
 | `driftMs` | number | Small correction from checkpoints; optional. |
 | `confidence` | enum | `low` \| `medium` \| `high` (drives prompt aggressiveness). |
+| `observationSource` | enum | `media_session` \| `accessibility` \| `manual` \| `mixed` — last authoritative source for anchoring (detailed policy implementation-defined). |
 
 ### 6.2 Estimated media time
+
+When **no fresh observed position** is integrated at this instant, extrapolate:
 
 While **`playbackState === playing`**:
 
@@ -107,42 +116,46 @@ t_est = pausedAtMediaTime   // plus drift if modeled as additive
 
 - `sessionAnchorWall = wall`
 - `baseMediaTime = media`
-- Reset or recompute `driftMs` per implementation policy (simplest: zero drift on full re-anchor).
+- Reset or recompute `driftMs` per implementation policy.
 
-### 6.3 Seek / jump
+### 6.3 Observed vs extrapolated time
 
-User performs seek in the native app:
+When **MediaSession** or **AccessibilityService** provides a usable **position update**:
 
-- **Requirement:** User MUST be able to **re-anchor** via **Sync now** + media time input (or equivalent).
-- Optional: detect “large discontinuity” only via **future assistive signals**—not required for MVP.
+- Apply policy to **blend or replace** extrapolation (e.g. periodic snap to observed position when within tolerance; larger deltas trigger **seek suspected** behavior and confidence downgrade until user confirms or a new checkpoint resolves ambiguity).
 
-### 6.4 Playback speed
+### 6.4 Seek / jump
 
-- **Requirement:** UI exposes **playback speed** presets matching common player settings.
-- Elapsed integration MUST multiply wall elapsed by `playbackRate`.
+- **Requirement:** User MUST be able to **re-anchor** via **Sync now** + media time input when automation disagrees or fails.
+- Optional: detect large discontinuities from **observed** position jumps—implementation-defined.
+
+### 6.5 Playback speed
+
+- **Requirement:** UI exposes **playback speed** presets matching common player settings when extrapolation is used.
+- Elapsed integration MUST multiply wall elapsed by `playbackRate` when extrapolating.
 
 ---
 
 ## 7. Pause / play semantics
 
-### 7.1 Truth model
+### 7.1 Preferred truth sources (when available)
 
-LaterTogether **does not** receive pause events from Netflix (or similar). **Ground truth** for pause is:
+1. **MediaSession** playback state / position updates.
+2. **Accessibility-derived** indicators when consistent with session policy.
+3. **Explicit** **Playing / Paused** control inside LaterTogether (always available).
+4. **Checkpoint** after the fact.
 
-1. **Explicit** **Playing / Paused** control inside LaterTogether (primary MVP path), or  
-2. **Checkpoint** that corrects accumulated error after the fact.
+### 7.2 Explicit pause (baseline UX)
 
-### 7.2 Explicit pause (recommended MVP UX)
+- User taps **Paused** in LaterTogether: set `playbackState = paused`, `pausedAtMediaTime = t_est` at transition instant.
+- User taps **Playing**: set `playbackState = playing`, new `sessionAnchorWall = now`, `baseMediaTime = pausedAtMediaTime`.
 
-- User taps **Paused** in LaterTogether when they pause the native player: set `playbackState = paused`, `pausedAtMediaTime = t_est` at transition instant.
-- User taps **Playing** when they resume: set `playbackState = playing`, new `sessionAnchorWall = now`, `baseMediaTime = pausedAtMediaTime`.
+### 7.3 Forgotten pause / stale observation
 
-### 7.3 Forgotten pause
+If extrapolation assumes **playing** while the native app is paused (or observation stalls):
 
-If user leaves LaterTogether in `playing` while native app is paused:
-
-- Estimated `t_est` runs ahead of actual playback.
-- **Mitigation:** time-based **“Still in sync?”** prompts; lowered `confidence`; prominent **Resync**.
+- Estimated `t_est` may run ahead.
+- **Mitigation:** **“Still in sync?”** prompts; lowered `confidence`; prominent **Resync**.
 
 ---
 
@@ -151,46 +164,36 @@ If user leaves LaterTogether in `playing` while native app is paused:
 ### 8.1 Start session
 
 1. User selects `contentKey` (or creates thread).
-2. User opens Netflix (or other app) as usual.
+2. User opens the third-party app as usual.
 3. User starts **Watch session** in LaterTogether.
-4. **First calibration:** user taps **Sync now** and enters **current on-screen media time** (mm:ss or seconds).
+4. **Calibration:** preferably from **observed** position; otherwise user taps **Sync now** and enters **current media time** (mm:ss or seconds).
 
 ### 8.2 Resync (any time)
 
-Same as calibration: captures **(wall, media)** and re-anchors per §6.2.
+Captures **(wall, media)** and re-anchors per §6.
 
 ### 8.3 Input UX requirements
 
 - Accept **numeric time** and **mm:ss** entry.
-- Validate plausible range (e.g. 0 … known runtime if available).
-- Optional: quick **±30s / ±2m** nudge when user reports “a bit off.”
+- Validate plausible range when runtime is known.
+- Optional: **±30s / ±2m** nudge controls.
 
 ---
 
-## 9. Checkpoint & “smart” re-sync
-
-Smart behavior reduces manual entry frequency; it must **never** silently assume native app state.
+## 9. Checkpoint & confidence
 
 ### 9.1 Periodic prompts
 
-- Trigger when `confidence !== high` or after **N minutes** of playback-estimated time (configurable).
-- Actions: **[Still synced]** (no-op or tiny drift bump) | **[Fix time]** (opens calibration).
+- Trigger when `confidence !== high` or after **N minutes** without a solid observation/checkpoint.
+- Actions: **[Still synced]** | **[Fix time]** (calibration).
 
 ### 9.2 Confidence rules (example policy)
 
 | Condition | Confidence |
 |-----------|------------|
-| Fresh calibration &lt; 2 min ago | `high` |
-| Long playing interval without checkpoint | degrade toward `medium` |
+| Fresh calibration or strong **MediaSession** alignment | `high` |
+| Long interval with weak or missing observation | toward `medium` / `low` |
 | User dismissed multiple prompts | `low` |
-
-### 9.3 Optional future signals (non-blocking)
-
-Documented for roadmap only:
-
-- Accessibility-assisted hints (Android).
-- Screen capture + OCR / CV (assistive, DRM-sensitive).
-- WebView lane with `HTMLMediaElement` access where permitted.
 
 ---
 
@@ -204,7 +207,7 @@ Documented for roadmap only:
   "mediaTimestamp": <number>,   // seconds, authoritative
   "body": "<string>",
   "authorId": "<string>",
-  "clientCreatedAt": "<ISO8601>"  // optional ordering / moderation
+  "clientCreatedAt": "<ISO8601>"
 }
 ```
 
@@ -212,99 +215,106 @@ Server MUST treat **`mediaTimestamp`** as the timeline authority for replay.
 
 ### 10.2 Display scheduling
 
-- **MVP:** Load messages via **REST** when the user opens or refreshes a thread (no dedicated realtime channel). Compute `t_est` locally at a tick interval (e.g. 250–500 ms) to decide which loaded messages to reveal.
-- **Later:** Optional polling or subscription (WebSocket / SSE / push) when near-real-time delivery of **new** messages is in scope.
-- Show messages where `mediaTimestamp <= t_est` and not yet displayed (per-session dedupe).
-- **Seek backward:** if `t_est` decreases, hide or mark future messages per product decision (spec default: **re-show allowed** when crossing forward again—implement idempotent display ledger).
+- **MVP:** Load messages via **Supabase-facing fetch** (REST/PostgREST or SDK) when the user opens or refreshes a thread; **no** Realtime subscription required. Compute `t_est` (and merge **observed** updates per policy) on a tick interval (e.g. 250–500 ms) to decide which loaded messages to reveal.
+- Show messages where `mediaTimestamp <= t_est` (subject to session display ledger / dedupe rules).
+- **Seek backward:** spec default remains **re-show allowed** when crossing forward again—implement idempotent display ledger.
 
 ### 10.3 Burst control
 
-- Optional minimum spacing or batching to avoid UI overload when catching up after pause.
+- Optional minimum spacing when catching up after pause.
 
 ---
 
-## 11. Platform scope — Android tablet
+## 11. Platform scope — Android tablet (Kotlin)
 
 ### 11.1 MVP assumptions
 
-- User watches in **native** streaming apps.
-- LaterTogether runs **alongside** (split-screen, PiP-friendly layout encouraged).
-- No dependency on cross-app playback introspection.
+- User watches in **native** streaming apps; LaterTogether runs **alongside** (split-screen; PiP-friendly layout encouraged).
+- **Single platform:** **Android tablet**; layouts and QA target **large**, **landscape-first** tablet use cases.
 
-### 11.2 Explicitly unsupported without future work
+### 11.2 Playback observation — MediaSession (primary)
 
-- Automatic pause detection from Netflix internals.
-- Reliable sync purely from notifications across all providers.
+- Use Android **`MediaSession`** / **`MediaController`** / related APIs to discover the **active** session and read **metadata** and **playback state** where the OS and the playing app expose them.
+- **Limitations:** Not all apps expose **precise position** or update frequency sufficient for chat sync; some sessions may be **incomplete** or **stale**. The implementation MUST degrade gracefully to §11.3 or §8.
 
-### 11.3 Client implementation (agreed direction)
+### 11.3 Playback observation — AccessibilityService (fallback)
 
-- **Flutter (Dart)** for the companion app — one codebase for MVP and planned multiplatform expansion without rewriting core flows.
-- **MVP focus:** Polish layouts and behavior for **Android tablet** (split-screen, landscape, large breakpoints); other platforms follow the same codebase when prioritized.
-- Session estimation, checkpoints, confidence rules, and “which messages to show at `t_est`” SHOULD live in **plain Dart** (or shared packages), not tightly coupled to widgets, so logic stays portable.
-- Future **Android-specific** assistive sync (e.g. Accessibility, §9.3) MAY use **platform channels** (or Pigeon); keep those integrations thin.
+- When §11.2 is insufficient, an **`AccessibilityService`** MAY:
+  - Inspect the **accessibility node tree** (text labels, content descriptions, hierarchy) for time displays or player state cues.
+  - **MUST NOT** rely on **screen capture**, **MediaProjection**, or **pixel/OCR pipelines** on the video surface to infer position—those approaches increase **DRM / content-protection** risk and are **out of scope** for this product’s playback inference.
 
----
+**Disclosure:** Users MUST explicitly enable and understand assistive modes before operation.
 
-## 12. Optional lanes (documented, not MVP-critical)
+### 11.4 UI — Jetpack Compose
 
-### 12.1 WebView “watch inside LaterTogether”
+- **Agreed stack:** **Jetpack Compose** with **Material 3** for new UI in this project (tablet layouts, navigation, theming).
+- **Architecture:** Prefer **ViewModel** + **Kotlin coroutines** / **StateFlow** (or equivalent unidirectional state) for screen logic; keep composables largely **stateless** where practical.
+- **Escape hatches:** Use **`AndroidView`** in Compose only when a **View**-based SDK or control has no Compose equivalent; avoid introducing parallel XML-first screens unless necessary.
 
-- **Purpose:** Where DOM access allows, read `HTMLMediaElement.currentTime` / `paused`.
-- **Limitations:** DRM, WebView blocking, CSP/iframes, policy risk—not universal (see prior discussion).
+**Alternatives (not default):** Traditional **XML + Views** remains valid Android-wide but is **not** the LaterTogether baseline—see revision history when this decision was recorded.
 
-### 12.2 Desktop browser extension
+### 11.5 Kotlin implementation expectations
 
-- **Purpose:** Inject into known players on web for stronger automation.
-- **Out of scope** for this document’s MVP mobile deliverable.
+- **Domain logic:** Session estimation, checkpoints, confidence rules, and “which messages to show at `t_est`” SHOULD be **testable** units decoupled from raw framework callbacks where feasible (pure Kotlin modules + instrumented tests for Android-specific bindings).
 
 ---
 
-## 13. Backend & API (sketch)
+## 12. Optional lanes (non-MVP unless revived)
+
+- **WebView “watch inside LaterTogether”** with `HTMLMediaElement` access where permitted.
+- **Desktop browser extension** for web players.
+
+---
+
+## 13. Backend & data — Supabase (sole backend)
 
 ### 13.1 Responsibilities
 
-- **MVP:** Persist and serve messages keyed by `contentKey` + `mediaTimestamp` over **REST**; no requirement for subscriber fan-out or live protocols.
-- **Later:** Optional fan-out of new messages to subscribers (WebSocket / SSE / push), session presence (typing, online counts), when live delivery is in product scope.
+- **Supabase is the only backend** for MVP: **PostgreSQL** persistence, **PostgREST**-style access via Supabase clients, **Auth**, and **Row Level Security**. No separate long-lived application server (e.g. FastAPI) is required when query patterns stay simple.
+- **Edge Functions** MAY host **thin** logic that does not belong in the client (validation glue, aggregations, or hiding implementation details)—keep most reads/writes **contentKey-centric** and filterable in Postgres or via narrow RPCs.
+- **Supabase Realtime** is **not** part of **MVP** message delivery; **post-MVP**, the same tables and RLS can back Realtime subscriptions without changing the core message model.
 
 ### 13.2 Client responsibilities
 
-- Maintain **local** `t_est`; server does not need millisecond-accurate “global playhead.”
+- Maintain **local** `t_est` and observation fusion; **Supabase** does not need millisecond-accurate global playhead state for MVP messaging.
 
-### 13.3 Endpoints (illustrative)
+### 13.3 Illustrative surface (non-binding)
 
-**MVP (REST):**
+Exact table and RPC names are **implementation details**, but the MVP needs at least:
 
-- `POST /threads/{contentKey}/messages`
-- `GET /threads/{contentKey}/messages?fromMedia=&toMedia=`
+- Insert message with `(contentKey, mediaTimestamp, body, authorId, …)`.
+- **Fetch messages by `contentKey`** with optional **range filters** on `mediaTimestamp` and pagination (primary access pattern).
 
-**Post-MVP (when live feeds are in scope):**
+**Post-MVP:** Optional **Realtime** subscription per thread when near-live delivery is prioritized.
 
-- `WS /threads/{contentKey}/live` (or SSE equivalent)
+### 13.4 Auth & RLS
 
-**Suggested persistence:** **PostgreSQL** (or a compatible managed service) for relational queries and indexes on thread + media time.
+- **Supabase Auth** is the **expected** way to identify **`authorId`** and enforce **Row Level Security** policies. Exact policies are **implementation-defined** and MUST be documented in the repository when added.
 
 ---
 
 ## 14. Privacy, security, compliance
 
-- Minimize collection of precise viewing habits beyond what’s needed for threads users join.
-- Clear disclosure that sync accuracy depends on **user-maintained** session state unless optional assistive modes are enabled.
-- Honor platform and content-provider terms; assistive capture features require separate legal review.
+- **Accessibility** modes require **clear consent**; prefer **structured** reads from the **accessibility tree** only—**no** mass retention of screen captures or frame buffers for inference (see §11.3).
+- Minimize collection of viewing habits beyond threads users join.
+- Honor **Google Play** policies for **AccessibilityService** (declaration, disclosure, non-deceptive use).
+- Honor content-provider **terms**; assistive modes may be restricted for some apps—communicate limitations honestly.
 
 ---
 
 ## 15. Success metrics (product)
 
-- Calibration events per hour of viewing (lower is better, bounded by perceived accuracy).
-- User-reported “out of sync” rate (survey or explicit flag).
-- Message delivery perceived as **on time** (qualitative + latency histogram vs checkpoint).
+- Calibration / manual fix events per hour (lower is better, bounded by perceived accuracy).
+- Time spent with **`confidence: high`** vs lower bands.
+- User-reported “out of sync” rate.
+- Message delivery perceived **on time** vs `t_est`.
 
 ---
 
-## 16. Open questions
+## 16. Open questions (product / engineering)
 
 1. **Edition collision:** Same `contentKey` for different cuts—how to split threads post-MVP?
-2. **Offline:** Queue outgoing messages with local `mediaTimestamp` until connectivity returns?
+2. **Offline:** Queue outgoing messages until connectivity returns?
 3. **Moderation:** Report/block at thread level; spam at high media density.
 4. **Multi-language UI** for time entry (locale formats).
 
@@ -312,30 +322,28 @@ Server MUST treat **`mediaTimestamp`** as the timeline authority for replay.
 
 ## 17. Implementation decisions (agreed)
 
-**Purpose:** Record build-time choices so the specification and the codebase stay aligned. Update this section when scope or stack changes.
+**Purpose:** Record build-time choices so the specification and the codebase stay aligned.
 
 ### 17.1 Client application
 
 | Decision | Choice |
 |----------|--------|
-| UI framework | **Flutter** (Dart) — single codebase for MVP and planned multiplatform targets. |
-| MVP compatibility target | **Android tablet** — primary QA and UX investment (split-screen, landscape, large layouts). |
-| Multiplatform | **Planned** (e.g. iOS, desktop, web) using the same Flutter project; avoid duplicating session/sync logic outside Dart where possible. |
-| Native integrations | Use **platform channels** (or **Pigeon**) for thin Android-only capabilities when Flutter cannot access an API directly (e.g. future assistive sync per §9.3). |
-
-Session estimation, checkpoint handling, and message display scheduling SHOULD remain **testable Dart** modules separate from presentation widgets.
+| Platform | **Android tablet only** — no multiplatform companion requirement. |
+| Language | **Kotlin** — native Android for **MediaSession**, **AccessibilityService**, and other platform APIs. |
+| UI | **Jetpack Compose** + **Material 3** (see §11.4). |
+| Playback signals | **MediaSession first**; **AccessibilityService** when MediaSession is insufficient; **manual** checkpoints always available. |
 
 ### 17.2 Backend and data (MVP)
 
 | Decision | Choice |
 |----------|--------|
-| Message / thread store | **PostgreSQL** (or API-compatible managed Postgres). |
-| API surface | **REST only** for creating and reading timestamped messages (including range queries by media time). |
-| Live delivery | **Out of scope for MVP** — no required WebSocket, SSE, or push feed; see §3 and §10.2. Add subscription or push when near-real-time fan-out is prioritized. |
+| Backend | **Supabase only** — Postgres, Auth, RLS; **Edge Functions** for thin server logic when needed. |
+| Data access pattern | **contentKey-centric** fetch/filter for threads and messages; minimal custom backend beyond Supabase. |
+| Realtime | **Out of scope for MVP**; schema and client layering SHOULD remain compatible with **Supabase Realtime** later. |
 
 ### 17.3 Rationale (short)
 
-Flutter limits duplication across future platforms while the release strategy stays **Android-tablet-first**. REST and Postgres keep server and operations minimal until live message feeds are required.
+Native Kotlin and **Compose** maximize control over **session**, **accessibility**, and **tablet UI** on Android. **Supabase** keeps persistence and auth managed without a dedicated app server for simple query shapes; **Edge Functions** cover the occasional server-side branch. Scope is intentionally **single-platform** to avoid splitting logic across non-Android targets.
 
 ---
 
@@ -343,5 +351,8 @@ Flutter limits duplication across future platforms while the release strategy st
 
 | Version | Date | Notes |
 |---------|------|-------|
-| 0.1 | 2026-05-07 | Initial companion + manual/checkpoint sync spec from product discussion |
-| 0.2 | 2026-05-08 | Stack alignment: Flutter client; Android tablet MVP; multiplatform planned; REST + Postgres MVP; no live message feeds. §11.3, §13, §17; §3/§10.2 updates. |
+| 0.1.1 | 2026-05-07 | Initial companion + manual/checkpoint sync spec |
+| 0.1.2 | 2026-05-08 | Stack alignment: Flutter client; Android tablet MVP; multiplatform planned; REST + Postgres MVP |
+| 0.1.3 | 2026-05-09 | **Major revision:** Android tablet **only**; **Kotlin** client; **MediaSession** + **AccessibilityService** playback observation; **Supabase** backend; multiplatform / Flutter / Postgres-FastAPI MVP choices superseded—see §17 |
+| 0.1.4 | 2026-05-09 | **Supabase-only** backend + **Edge Functions**; **Realtime** explicitly post-MVP with upgrade path; **no screen capture** for playback inference (§11.3); **UI toolkit options** (§11.4); open questions trimmed |
+| 0.1.5 | 2026-05-09 | **Jetpack Compose** + **Material 3** locked as UI stack (§11.4, §17.1); UI toolkit open question closed |
