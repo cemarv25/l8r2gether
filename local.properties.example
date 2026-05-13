@@ -1,0 +1,8 @@
+# Copy to `local.properties` (do not commit). Paths are machine-local.
+
+# Android SDK (required for Gradle Android targets)
+sdk.dir=/path/to/Android/sdk
+
+# Supabase project (required for live sync; leave blank to use in-memory placeholder repo)
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
