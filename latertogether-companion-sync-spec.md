@@ -1,6 +1,6 @@
 # LaterTogether — Companion App + Playback-Aware Sync
 
-**Version:** 0.1  
+**Version:** 0.1.7  
 **Status:** Draft specification  
 **Scope:** **Android tablet only.** The companion runs **alongside** third-party players (e.g. streaming apps); playback is **not** assumed to occur inside LaterTogether unless explicitly added later. The client is a **native Kotlin** application to access **Android platform APIs** (notably **MediaSession** and, when needed, **AccessibilityService**). Message persistence uses **Supabase** (PostgreSQL and related Supabase features—see §13).
 
@@ -134,6 +134,14 @@ When **MediaSession** or **AccessibilityService** provides a usable **position u
 - **Requirement:** UI exposes **playback speed** presets matching common player settings when extrapolation is used.
 - Elapsed integration MUST multiply wall elapsed by `playbackRate` when extrapolating.
 
+### 6.6 Persisted session library (async multi-title)
+
+LaterTogether is **asynchronous**: users may pause one title, start another days later, and return to either. The client MUST persist **one session record per `contentKey`** (or per distinct watch attempt if edition splits apply later), not only the title currently open in the player.
+
+Each persisted record holds the §6.1 fields (or a snapshot sufficient to restore them). At most **one** record is **in focus** for live `t_est` / observation fusion while the user is actively in that thread; all others remain **dormant** with frozen `pausedAtMediaTime` (and related anchor data) until resumed.
+
+**Home list:** Surface dormant and in-progress sessions together—e.g. “Paused at 39:18”—sorted by **last activity** (most recent watch or pause first). This is **not** simultaneous playback of two streams; it is a **resume queue** across titles over time.
+
 ---
 
 ## 7. Pause / play semantics
@@ -253,7 +261,45 @@ Server MUST treat **`mediaTimestamp`** as the timeline authority for replay.
 
 **Alternatives (not default):** Traditional **XML + Views** remains valid Android-wide but is **not** the LaterTogether baseline—see revision history when this decision was recorded.
 
-### 11.5 Kotlin implementation expectations
+### 11.5 Visual design — Intimate Connection System
+
+The following extends **Material 3** (§11.4) via a custom **ColorScheme**, **Typography**, and **Shape** tokens in Compose—it does **not** replace the agreed UI stack.
+
+#### Design philosophy
+
+- **Minimalist & cozy:** Soft, organic shapes, warm palettes (dusty rose, muted sage, cream), and gentle glows.
+- **Literata typography:** **Literata** serif for headlines—sophisticated yet “at-home.”
+- **Intimate connection:** Nudges, timestamps, and messaging should feel like a whisper or a gentle touch (aligned with checkpoint prompts in §9).
+
+#### Color palette
+
+| Role | Hex | Use |
+|------|-----|-----|
+| **Surface** | `#fff8f6` | Warm cream base |
+| **Primary** | `#7b5455` | Dusty rose — core actions |
+| **Secondary** | `#5b614f` | Muted sage — grounding elements |
+| **Container low** | `#fdf1ed` | Subtle elevation |
+| **Accent** | `#d4a5a5` | Soft highlight |
+
+#### Typography
+
+- **Headlines:** *Literata* (serif) — elegant, readable, comforting.
+- **Body & labels:** Clean sans-serif with generous tracking—modern yet approachable (specific family is implementation-defined).
+
+#### Component geometry
+
+- **Roundness:** `ROUND_EIGHT` (8 dp corners) on most containers—soft without feeling childish.
+- **Elevation:** Flat or low shadow (`shadow-sm`) so the UI feels grounded and calm.
+
+### 11.6 Screens (draft; more to be added)
+
+#### Home
+
+- **Pick up where you left off:** Central list of **resumable watch sessions** (§6.6)—one row per `contentKey` the user has started and not abandoned—each showing the last known pause point (e.g. “Paused at 39:18”) from `pausedAtMediaTime` or the latest checkpoint (§6–§7). Sorted by **last watch activity**, most recent first (e.g. movie paused yesterday above a movie paused last week).
+- **Async multi-title:** Users may watch title A, pause, later start title B, pause, and later see **both** on Home. Only the session the user opens is **in focus** for live sync; the other remains a dormant snapshot until selected—not two players running at once.
+- **Sync now (manual):** Precision re-anchor for partners via a soft-styled modal—same flows as §8 (**Sync now** / **Resync**); label “Manual sync” in marketing copy is optional but the spec term is **Sync now**.
+
+### 11.7 Kotlin implementation expectations
 
 - **Domain logic:** Session estimation, checkpoints, confidence rules, and “which messages to show at `t_est`” SHOULD be **testable** units decoupled from raw framework callbacks where feasible (pure Kotlin modules + instrumented tests for Android-specific bindings).
 
@@ -356,3 +402,5 @@ Native Kotlin and **Compose** maximize control over **session**, **accessibility
 | 0.1.3 | 2026-05-09 | **Major revision:** Android tablet **only**; **Kotlin** client; **MediaSession** + **AccessibilityService** playback observation; **Supabase** backend; multiplatform / Flutter / Postgres-FastAPI MVP choices superseded—see §17 |
 | 0.1.4 | 2026-05-09 | **Supabase-only** backend + **Edge Functions**; **Realtime** explicitly post-MVP with upgrade path; **no screen capture** for playback inference (§11.3); **UI toolkit options** (§11.4); open questions trimmed |
 | 0.1.5 | 2026-05-09 | **Jetpack Compose** + **Material 3** locked as UI stack (§11.4, §17.1); UI toolkit open question closed |
+| 0.1.6 | 2026-05-20 | **Intimate Connection** visual design + Home screen draft (§11.5–§11.6) |
+| 0.1.7 | 2026-05-20 | **Async multi-title** resume library clarified (§6.6, §11.6 Home)—not simultaneous playback |
