@@ -17,23 +17,23 @@ Reworked the empty home state around the supplied mockup: centered media tile wi
 | Command / Check | Result | Notes |
 | --- | --- | --- |
 | `./gradlew :app:compileDebugKotlin --console=plain` | Passed | Validates Compose/Kotlin changes compile. |
-| Android emulator screenshot | Not captured | No configured AVD/device available. |
+| Android emulator screenshot | Not captured for empty state | `Medium_Tablet` was available, but `pm clear com.l8r2gether.app` hung when attempting to reset local sessions for empty-state capture. |
 
 ## UI Evidence
 
 - Static source comparison against `screen-mockup-images/home-screen-no-sessions.png`.
-- Emulator screenshot evidence not captured because no Android virtual devices or connected devices are available.
+- Empty-state emulator screenshot was attempted but not captured because `pm clear com.l8r2gether.app` hung on `emulator-5554`.
 
 ## Android QA Evidence
 
 - Applies: yes
 - Skill used: `android-emulator-qa`
-- Emulator/device: none available
+- Emulator/device: `emulator-5554`, `Medium_Tablet`
 - Build variant: debug
 - Screenshots: not captured
-- UI tree summaries: not captured
-- Logcat: not captured
-- Result: blocked by unavailable emulator/device; compile verification passed.
+- UI tree summaries: not captured; `uiautomator dump` was killed/hung on the emulator
+- Logcat: `documentation/features/implementation/qa/home-screen-tablet-populated-logcat-excerpt.txt`
+- Result: empty-state visual QA remains limited to static review; tablet emulator was available but could not be reset to empty state.
 
 ## Acceptance Criteria Mapping
 
@@ -46,7 +46,7 @@ Reworked the empty home state around the supplied mockup: centered media tile wi
 ## Known Limitations
 
 - Hero illustration is Compose-drawn rather than an exact design asset.
-- Emulator screenshots were unavailable due to no configured AVD/device.
+- Empty-state screenshot was not captured because `pm clear com.l8r2gether.app` hung on the emulator.
 
 ## References
 

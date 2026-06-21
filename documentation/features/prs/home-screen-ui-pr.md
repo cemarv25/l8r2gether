@@ -43,14 +43,16 @@ Refreshes the Android Compose home screen to closely match the supplied no-sessi
 
 - Static implementation review against `screen-mockup-images/home-screen-no-sessions.png`.
 - Static implementation review against `screen-mockup-images/home-screen-with-sessions.png`.
-- Emulator screenshots were not captured because no Android virtual devices or connected devices are available.
+- Tablet populated screenshot captured locally and intentionally not committed; summarized in PR comment.
+- QA summary: `documentation/features/implementation/qa/home-screen-tablet-qa-summary.md`.
+- Empty-state emulator screenshot was attempted but not captured because `pm clear com.l8r2gether.app` hung on the emulator.
 
 ## Risks
 
 - Exact avatar and poster parity is limited because the source assets were not supplied. Mitigation: use Compose-only placeholders that preserve the visual structure without backend or asset fetching.
-- Android visual evidence is limited by unavailable emulator/device. Mitigation: compile passed and the QA blocker is documented.
+- Android visual evidence now includes a populated tablet screenshot. Empty-state and UI-tree capture remain limited by emulator command hangs.
 
 ## Follow-Ups
 
-- Capture emulator screenshots once an AVD or device is available.
+- Capture empty-state emulator screenshot once app data reset works reliably on the emulator.
 - Replace Compose placeholder avatar/posters if exact design assets are later provided.

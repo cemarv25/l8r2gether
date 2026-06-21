@@ -21,24 +21,27 @@ Updated the shared home shell chrome to better match the supplied Lume mockups: 
 | Command / Check | Result | Notes |
 | --- | --- | --- |
 | `./gradlew :app:compileDebugKotlin --console=plain` | Passed | Required escalation to use local `~/.gradle` cache. |
-| `/Users/cesar/Library/Android/sdk/platform-tools/adb devices` | No devices attached | ADB daemon started successfully after escalation. |
-| `/Users/cesar/Library/Android/sdk/emulator/emulator -list-avds` | No output | No configured AVDs available for emulator screenshots. |
+| `/Users/cesar/Library/Android/sdk/platform-tools/adb devices` | Passed | `emulator-5554` attached after `Medium_Tablet` AVD was added. |
+| `/Users/cesar/Library/Android/sdk/emulator/emulator -list-avds` | Passed | `Medium_Tablet` available. |
+| `./gradlew :app:installDebug --console=plain` | Partially completed | APK installed; Gradle command hung after device install output and was interrupted. |
+| `adb shell am start -n com.l8r2gether.app/.MainActivity` | Passed | App launched on `emulator-5554`. |
 
 ## UI Evidence
 
 - Static source comparison against `screen-mockup-images/home-screen-no-sessions.png` and `screen-mockup-images/home-screen-with-sessions.png`.
-- Emulator screenshot evidence not captured because no Android virtual devices or connected devices are available.
+- Tablet screenshot: captured locally at `documentation/features/implementation/qa/home-screen-tablet-populated.png`, intentionally not committed, and summarized in PR comment.
+- QA summary: `documentation/features/implementation/qa/home-screen-tablet-qa-summary.md`.
 
 ## Android QA Evidence
 
 - Applies: yes
 - Skill used: `android-emulator-qa`
-- Emulator/device: none available
+- Emulator/device: `emulator-5554`, `Medium_Tablet`
 - Build variant: debug
-- Screenshots: not captured
-- UI tree summaries: not captured
-- Logcat: not captured
-- Result: blocked by unavailable emulator/device; compile verification passed.
+- Screenshots: captured locally at `documentation/features/implementation/qa/home-screen-tablet-populated.png`, intentionally not committed, and summarized in PR comment
+- UI tree summaries: not captured; `uiautomator dump` was killed/hung on the emulator
+- Logcat: `documentation/features/implementation/qa/home-screen-tablet-populated-logcat-excerpt.txt`
+- Result: populated home shell rendered on tablet emulator; compile verification passed.
 
 ## Acceptance Criteria Mapping
 
@@ -51,7 +54,7 @@ Updated the shared home shell chrome to better match the supplied Lume mockups: 
 ## Known Limitations
 
 - Avatar is a Compose placeholder because no exact avatar bitmap was supplied.
-- Emulator screenshots were unavailable due to no configured AVD/device.
+- Empty-state screenshot was not captured because `pm clear com.l8r2gether.app` hung on the emulator.
 
 ## References
 

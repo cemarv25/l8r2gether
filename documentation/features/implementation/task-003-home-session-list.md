@@ -17,23 +17,24 @@ Reworked the populated home state to mirror the mockup: centered select-new-medi
 | Command / Check | Result | Notes |
 | --- | --- | --- |
 | `./gradlew :app:compileDebugKotlin --console=plain` | Passed | Validates Compose/Kotlin changes compile. |
-| Android emulator screenshot | Not captured | No configured AVD/device available. |
+| Android emulator screenshot | Passed | Captured populated home screen on `Medium_Tablet`. |
 
 ## UI Evidence
 
 - Static source comparison against `screen-mockup-images/home-screen-with-sessions.png`.
-- Emulator screenshot evidence not captured because no Android virtual devices or connected devices are available.
+- Tablet screenshot: captured locally at `documentation/features/implementation/qa/home-screen-tablet-populated.png`, intentionally not committed, and summarized in PR comment.
+- QA summary: `documentation/features/implementation/qa/home-screen-tablet-qa-summary.md`.
 
 ## Android QA Evidence
 
 - Applies: yes
 - Skill used: `android-emulator-qa`
-- Emulator/device: none available
+- Emulator/device: `emulator-5554`, `Medium_Tablet`
 - Build variant: debug
-- Screenshots: not captured
-- UI tree summaries: not captured
-- Logcat: not captured
-- Result: blocked by unavailable emulator/device; compile verification passed.
+- Screenshots: captured locally at `documentation/features/implementation/qa/home-screen-tablet-populated.png`, intentionally not committed, and summarized in PR comment
+- UI tree summaries: not captured; `uiautomator dump` was killed/hung on the emulator
+- Logcat: `documentation/features/implementation/qa/home-screen-tablet-populated-logcat-excerpt.txt`
+- Result: populated home screen rendered on tablet emulator; compile verification passed.
 
 ## Acceptance Criteria Mapping
 
@@ -46,7 +47,7 @@ Reworked the populated home state to mirror the mockup: centered select-new-medi
 ## Known Limitations
 
 - Movie thumbnails are deterministic Compose placeholders because exact poster assets were not supplied.
-- Emulator screenshots were unavailable due to no configured AVD/device.
+- UI tree capture was not available because `uiautomator dump` was killed/hung on the emulator.
 
 ## References
 

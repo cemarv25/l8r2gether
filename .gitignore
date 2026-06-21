@@ -15,3 +15,4 @@ captures/
 *.apk
 *.ap_
 *.aab
+documentation/features/implementation/qa/*.png
