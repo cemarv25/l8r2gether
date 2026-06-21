@@ -20,11 +20,12 @@ Merge policy: Do not merge by automation
 | 2026-06-21 11:20 CEST | CI failed | GitHub Actions cannot resolve `libs` in `build.gradle.kts` because `gradle/libs.versions.toml` is ignored and absent from GitHub. | Proposed focused CI fix; awaiting approval. |
 | 2026-06-21 12:35 CEST | Android tablet QA rerun | `Medium_Tablet` emulator captured populated home screenshot at 2560x1600. UI-tree dump and empty-state reset were blocked by emulator command hangs. | Added QA evidence artifacts. |
 | 2026-06-21 12:53 CEST | CI fix approved | User approved tracking `gradle/libs.versions.toml`. | Updated `.gitignore`, force-added version catalog, and ran local CI command successfully. |
+| 2026-06-21 12:57 CEST | CI re-check passed | Android CI `Build, lint, and test` passed in 3m45s. | No further CI fix needed. |
 
 ## Current CI Status
 
-- Pending re-check after CI fix push.
-- Previous root cause: `gradle/libs.versions.toml` was ignored by `/gradle/*` and absent on the PR branch in GitHub.
+- Passing: Android CI `Build, lint, and test`.
+- Previous root cause fixed: `gradle/libs.versions.toml` is now tracked for GitHub Actions.
 
 ## Actionable Comments
 
@@ -32,8 +33,8 @@ Merge policy: Do not merge by automation
 
 ## Fixes Pushed
 
-- Pending commit: `fix: include Gradle version catalog`, tracks `gradle/libs.versions.toml` for CI.
+- `5825de1` `fix: include Gradle version catalog`, tracks `gradle/libs.versions.toml` for CI.
 
 ## Remaining Work
 
-- Re-check CI after fix is pushed.
+- None.
