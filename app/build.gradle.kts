@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.latertogether.app"
+    namespace = "com.l8r2gether.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.latertogether.app"
+        applicationId = "com.l8r2gether.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -34,6 +34,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

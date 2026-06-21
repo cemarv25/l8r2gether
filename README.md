@@ -1,6 +1,6 @@
-# LaterTogether (Android companion)
+# l8r2gether (Android companion)
 
-Native Kotlin + Jetpack Compose tablet companion for timestamp-anchored async chat. This greenfield build implements the **Home screen** (empty state, session library, Sync now) per `latertogether-companion-sync-spec.md` v0.1.7.
+Native Kotlin + Jetpack Compose tablet companion for timestamp-anchored async chat. This greenfield build implements the **Home screen** (empty state, session library, Sync now) per `l8r2gether-companion-sync-spec.md` v0.1.7.
 
 ## Requirements
 

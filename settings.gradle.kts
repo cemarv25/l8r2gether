@@ -17,5 +17,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LaterTogether"
+rootProject.name = "l8r2gether"
 include(":app", ":domain")
