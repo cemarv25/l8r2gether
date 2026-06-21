@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Delivery Workflow"
+  short_description: "Plan, review, build, and monitor feature work"
+  default_prompt: "Use $feature-delivery-workflow to plan, implement, review, open a draft PR, and monitor work without merging."
