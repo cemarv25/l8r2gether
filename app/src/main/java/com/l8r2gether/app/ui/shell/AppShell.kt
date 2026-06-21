@@ -25,7 +25,7 @@ fun AppShell(
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier.padding(start = 88.dp),
+                modifier = Modifier.padding(start = 96.dp),
             )
         },
     ) { padding ->

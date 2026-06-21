@@ -1,16 +1,21 @@
 package com.l8r2gether.app.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,7 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.MovieCreation
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,16 +45,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.l8r2gether.app.R
-import com.l8r2gether.app.ui.theme.LtAccent
+import com.l8r2gether.app.ui.theme.LtCanvas
 import com.l8r2gether.app.ui.theme.LtContainerLow
-import com.l8r2gether.app.ui.theme.LtOnBackground
+import com.l8r2gether.app.ui.theme.LtControlSurface
+import com.l8r2gether.app.ui.theme.LtInk
 import com.l8r2gether.app.ui.theme.LtOnPrimary
+import com.l8r2gether.app.ui.theme.LtOutline
 import com.l8r2gether.app.ui.theme.LtPrimary
-import com.l8r2gether.app.ui.theme.LtRailSelected
-import com.l8r2gether.app.ui.theme.LtSurface
 import com.l8r2gether.app.viewmodel.SessionListItemUi
 
 private val PillShape = RoundedCornerShape(percent = 50)
@@ -68,17 +74,17 @@ fun HomeSessionList(
             .fillMaxSize()
             .background(
                 Brush.radialGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.5f), LtSurface),
-                    radius = 900f,
+                    colors = listOf(Color(0xFFFFEDE8).copy(alpha = 0.55f), LtCanvas),
+                    radius = 980f,
                 ),
             ),
     ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 48.dp, vertical = 24.dp),
+                .padding(horizontal = 48.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(26.dp),
         ) {
             item {
                 SelectNewMediaBar(onClick = onSelectNewMedia)
@@ -86,20 +92,23 @@ fun HomeSessionList(
             item {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth(0.85f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 22.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.home_pick_up_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = LtOnBackground,
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = LtInk,
                         textAlign = TextAlign.Center,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.home_pick_up_subtitle),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color(0xFF514641),
                         textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = 420.dp),
                     )
                 }
             }
@@ -108,7 +117,9 @@ fun HomeSessionList(
                     item = item,
                     onResume = { onResumeSession(item.contentKey) },
                     onAdjustTimestamp = { onSyncNow(item.contentKey) },
-                    modifier = Modifier.fillMaxWidth(0.85f),
+                    modifier = Modifier
+                        .fillMaxWidth(0.72f)
+                        .widthIn(max = 804.dp),
                 )
             }
             item { Spacer(modifier = Modifier.height(72.dp)) }
@@ -117,14 +128,16 @@ fun HomeSessionList(
             onClick = onFavoritesClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 32.dp, bottom = 32.dp),
+                .padding(end = 38.dp, bottom = 38.dp)
+                .size(80.dp),
             shape = CircleShape,
-            containerColor = LtPrimary,
+            containerColor = Color(0xFFA97B7D),
             contentColor = LtOnPrimary,
         ) {
             Icon(
                 Icons.Default.Favorite,
                 contentDescription = stringResource(R.string.cd_favorites_fab),
+                modifier = Modifier.size(36.dp),
             )
         }
     }
@@ -134,30 +147,34 @@ fun HomeSessionList(
 private fun SelectNewMediaBar(onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .heightIn(min = 66.dp)
+            .widthIn(min = 364.dp),
         shape = PillShape,
-        color = LtRailSelected,
+        color = LtControlSurface,
+        border = BorderStroke(1.dp, LtOutline),
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(horizontal = 32.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Icon(
-                    Icons.Outlined.PlayCircle,
+                    Icons.Outlined.MovieCreation,
                     contentDescription = null,
                     tint = LtPrimary,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(28.dp),
                 )
                 Text(
                     text = stringResource(R.string.home_select_new_media),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
                     color = LtPrimary,
                 )
             }
@@ -179,29 +196,33 @@ private fun SessionCard(
 ) {
     Card(
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 128.dp),
+        ) {
             IconButton(
                 onClick = {},
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp),
+                    .padding(top = 22.dp, end = 22.dp),
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.EventNote,
                     contentDescription = stringResource(R.string.cd_session_notes),
-                    tint = LtAccent,
-                    modifier = Modifier.size(20.dp),
+                    tint = LtPrimary.copy(alpha = 0.88f),
+                    modifier = Modifier.size(22.dp),
                 )
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(start = 24.dp, top = 24.dp, end = 72.dp, bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 SessionThumbnail(
@@ -216,12 +237,14 @@ private fun SessionCard(
                         Text(
                             text = item.displayTitle,
                             style = MaterialTheme.typography.titleLarge,
-                            color = LtOnBackground,
+                            fontWeight = FontWeight.SemiBold,
+                            color = LtInk,
                         )
                         Text(
                             text = item.pauseSubtitle,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold,
+                            color = LtPrimary,
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -233,41 +256,49 @@ private fun SessionCard(
                                     containerColor = LtPrimary,
                                     contentColor = LtOnPrimary,
                                 ),
-                                contentPadding = ButtonDefaults.ContentPadding,
+                                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
                             ) {
                                 Icon(
                                     Icons.Default.PlayArrow,
                                     contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(16.dp),
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.home_resume_session))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.home_resume_session),
+                                    fontWeight = FontWeight.SemiBold,
+                                )
                             }
                         } else {
                             Button(
                                 onClick = onResume,
                                 shape = PillShape,
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = LtContainerLow,
+                                    containerColor = LtContainerLow.copy(alpha = 0.72f),
                                     contentColor = LtPrimary,
                                 ),
-                                contentPadding = ButtonDefaults.ContentPadding,
+                                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
                             ) {
                                 Icon(
                                     Icons.Default.PlayArrow,
                                     contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(16.dp),
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.home_resume))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.home_resume), fontWeight = FontWeight.SemiBold)
                             }
                         }
                         OutlinedButton(
                             onClick = onAdjustTimestamp,
                             shape = PillShape,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = LtPrimary),
+                            border = BorderStroke(1.dp, LtOutline),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF5C514D)),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                         ) {
-                            Text(stringResource(R.string.home_adjust_timestamp))
+                            Text(
+                                stringResource(R.string.home_adjust_timestamp),
+                                fontWeight = FontWeight.SemiBold,
+                            )
                         }
                     }
                 }
@@ -287,26 +318,36 @@ private fun SessionThumbnail(
         modifier = modifier
             .width(120.dp)
             .height(80.dp)
-            .clip(MaterialTheme.shapes.medium)
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 Brush.linearGradient(
-                    colors = listOf(tint, tint.copy(alpha = 0.7f)),
+                    colors = listOf(Color(0xFF34333A), tint, Color(0xFF1F2227)),
                 ),
-            ),
+            )
+            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .align(Alignment.TopStart)
+                .padding(start = 28.dp, top = 10.dp)
+                .size(width = 42.dp, height = 54.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color.White.copy(alpha = 0.15f)),
+        )
+        Box(
+            modifier = Modifier
+                .size(30.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.85f)),
+                .background(Color.White.copy(alpha = 0.12f))
+                .border(1.dp, Color.White.copy(alpha = 0.82f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Default.PlayArrow,
                 contentDescription = stringResource(R.string.cd_session_thumbnail, title),
-                tint = LtPrimary,
-                modifier = Modifier.size(22.dp),
+                tint = Color.White,
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -314,10 +355,10 @@ private fun SessionThumbnail(
 
 private fun thumbnailTintFor(contentKey: String): Color {
     val palette = listOf(
-        Color(0xFFC9A88E),
-        Color(0xFF8BA89A),
-        Color(0xFFB8A0C4),
-        Color(0xFF9AABB8),
+        Color(0xFF9B7C62),
+        Color(0xFF578291),
+        Color(0xFF7B6A92),
+        Color(0xFF6E7F74),
     )
     return palette[kotlin.math.abs(contentKey.hashCode()) % palette.size]
 }
