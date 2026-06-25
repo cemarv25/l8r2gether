@@ -1,6 +1,7 @@
 *.iml
 .gradle/
 /gradle/*
+!/gradle/libs.versions.toml
 !/gradle/wrapper/
 !/gradle/wrapper/gradle-wrapper.jar
 !/gradle/wrapper/gradle-wrapper.properties
@@ -15,3 +16,4 @@ captures/
 *.apk
 *.ap_
 *.aab
+documentation/features/implementation/qa/*.png

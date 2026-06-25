@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Movie
@@ -32,13 +34,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.l8r2gether.app.R
 import com.l8r2gether.app.ui.theme.LtAccent
+import com.l8r2gether.app.ui.theme.LtCanvas
+import com.l8r2gether.app.ui.theme.LtControlSurface
+import com.l8r2gether.app.ui.theme.LtMuted
 import com.l8r2gether.app.ui.theme.LtOnBackground
 import com.l8r2gether.app.ui.theme.LtPrimary
-import com.l8r2gether.app.ui.theme.LtSurface
 
 @Composable
 fun HomeEmptyState(
@@ -51,54 +56,26 @@ fun HomeEmptyState(
             .fillMaxSize()
             .background(
                 Brush.radialGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.6f), LtSurface),
-                    radius = 800f,
+                    colors = listOf(Color(0xFFFFE9E4).copy(alpha = 0.72f), LtCanvas),
+                    radius = 760f,
                 ),
             ),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 48.dp, vertical = 32.dp),
+                .padding(horizontal = 48.dp, vertical = 26.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(200.dp)
-                    .clip(MaterialTheme.shapes.large)
-                    .background(Color.White.copy(alpha = 0.85f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Movie,
-                        contentDescription = stringResource(R.string.cd_clapperboard),
-                        modifier = Modifier.size(72.dp),
-                        tint = LtPrimary,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(
-                            Icons.Outlined.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = LtAccent,
-                        )
-                        Icon(
-                            Icons.Outlined.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = LtAccent,
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.weight(0.72f))
+            EmptyHeroTile()
+            Spacer(modifier = Modifier.height(84.dp))
             Text(
                 text = stringResource(R.string.home_headline),
                 style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
                 color = LtOnBackground,
+                modifier = Modifier.widthIn(max = 540.dp),
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -106,13 +83,15 @@ fun HomeEmptyState(
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(0.7f),
+                modifier = Modifier.widthIn(max = 500.dp),
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(44.dp))
             Button(
                 onClick = onStartNewSession,
-                modifier = Modifier.fillMaxWidth(0.45f),
-                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .heightIn(min = 56.dp)
+                    .widthIn(min = 244.dp),
+                shape = RoundedCornerShape(percent = 50),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = LtPrimary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -120,26 +99,81 @@ fun HomeEmptyState(
             ) {
                 Icon(Icons.Outlined.PlayCircle, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(stringResource(R.string.home_start_session))
+                Text(
+                    stringResource(R.string.home_start_session),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(onClick = onBrowseLibrary) {
                 Text(
                     stringResource(R.string.home_browse_library),
-                    color = LtPrimary,
-                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
             Row(
-                horizontalArrangement = Arrangement.spacedBy(48.dp),
+                horizontalArrangement = Arrangement.spacedBy(72.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FeatureChip(Icons.Default.Weekend, stringResource(R.string.feature_cozy_setup))
                 FeatureChip(Icons.Default.Schedule, stringResource(R.string.feature_any_time))
                 FeatureChip(Icons.Default.ChatBubbleOutline, stringResource(R.string.feature_live_reaction))
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(52.dp))
+        }
+    }
+}
+
+@Composable
+private fun EmptyHeroTile() {
+    Box(
+        modifier = Modifier.size(260.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(252.dp)
+                .background(
+                    Brush.radialGradient(
+                        listOf(Color.White.copy(alpha = 0.95f), Color.White.copy(alpha = 0f)),
+                        radius = 260f,
+                    ),
+                    shape = CircleShape,
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .size(196.dp)
+                .clip(RoundedCornerShape(58.dp))
+                .background(Color.White.copy(alpha = 0.92f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Default.Movie,
+                    contentDescription = stringResource(R.string.cd_clapperboard),
+                    modifier = Modifier.size(70.dp),
+                    tint = LtPrimary,
+                )
+                Spacer(modifier = Modifier.height(22.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = LtAccent.copy(alpha = 0.75f),
+                    )
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = LtAccent.copy(alpha = 0.82f),
+                    )
+                }
+            }
         }
     }
 }
@@ -152,14 +186,14 @@ private fun FeatureChip(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(28.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                .background(LtControlSurface.copy(alpha = 0.28f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = label, tint = LtPrimary, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = label, tint = LtMuted, modifier = Modifier.size(22.dp))
         }
         Spacer(modifier = Modifier.height(6.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, color = LtPrimary)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = LtMuted)
     }
 }

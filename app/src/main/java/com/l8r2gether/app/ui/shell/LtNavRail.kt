@@ -1,21 +1,24 @@
 package com.l8r2gether.app.ui.shell
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.MovieCreation
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +33,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.l8r2gether.app.R
+import com.l8r2gether.app.ui.theme.LtOnBackground
 import com.l8r2gether.app.ui.theme.LtPrimary
+import com.l8r2gether.app.ui.theme.LtRailSurface
 import com.l8r2gether.app.ui.theme.LtRailSelected
 
 @Composable
@@ -40,34 +45,34 @@ fun LtNavRail(
 ) {
     Column(
         modifier = modifier
-            .width(88.dp)
+            .width(96.dp)
             .fillMaxHeight()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(vertical = 24.dp)
+            .background(LtRailSurface)
+            .padding(vertical = 22.dp)
             .semantics { contentDescription = "Navigation" },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
             text = "Us",
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = LtPrimary,
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = 18.dp),
         )
         RailItem(
-            icon = { Icon(Icons.Default.Movie, contentDescription = stringResource(R.string.nav_cinema)) },
+            icon = { Icon(Icons.Outlined.MovieCreation, contentDescription = stringResource(R.string.nav_cinema)) },
             label = stringResource(R.string.nav_cinema),
             selected = true,
             onClick = {},
         )
         RailItem(
-            icon = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.nav_moments)) },
+            icon = { Icon(Icons.Outlined.PhotoLibrary, contentDescription = stringResource(R.string.nav_moments)) },
             label = stringResource(R.string.nav_moments),
             selected = false,
             onClick = onComingSoon,
         )
         RailItem(
-            icon = { Icon(Icons.Default.GridView, contentDescription = stringResource(R.string.nav_lounge)) },
+            icon = { Icon(Icons.Outlined.GridView, contentDescription = stringResource(R.string.nav_lounge)) },
             label = stringResource(R.string.nav_lounge),
             selected = false,
             onClick = onComingSoon,
@@ -88,7 +93,7 @@ fun LtNavRail(
         }
         Spacer(modifier = Modifier.height(8.dp))
         RailItem(
-            icon = { Icon(Icons.Default.HelpOutline, contentDescription = stringResource(R.string.nav_help)) },
+            icon = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = stringResource(R.string.nav_help)) },
             label = stringResource(R.string.nav_help),
             selected = false,
             onClick = onComingSoon,
@@ -106,17 +111,23 @@ private fun RailItem(
     val bg = if (selected) LtRailSelected else MaterialTheme.colorScheme.surface
     Surface(
         onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(10.dp),
         color = bg,
-        modifier = Modifier.padding(horizontal = 8.dp),
+        modifier = Modifier
+            .padding(horizontal = 6.dp)
+            .fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            icon()
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = LtPrimary)
+            Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                icon()
+            }
+            Text(text = label, style = MaterialTheme.typography.labelLarge, color = LtOnBackground)
         }
     }
 }
