@@ -3,6 +3,7 @@ package com.l8r2gether.app.ui.shell
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.l8r2gether.app.R
 import com.l8r2gether.app.ui.theme.LtOnBackground
@@ -41,50 +43,64 @@ fun LtTopBar(
     onComingSoon: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .padding(start = 40.dp, end = 34.dp, top = 14.dp, bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.displaySmall,
-            color = LtOnBackground,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = {}) {
-                Text(
-                    stringResource(R.string.nav_cinema),
-                    fontWeight = FontWeight.SemiBold,
-                    color = LtOnBackground,
-                )
+        val showTopNavigation = maxWidth >= 900.dp
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = if (showTopNavigation) {
+                    MaterialTheme.typography.displaySmall
+                } else {
+                    MaterialTheme.typography.headlineLarge
+                },
+                color = LtOnBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (showTopNavigation) {
+                    TextButton(onClick = {}) {
+                        Text(
+                            stringResource(R.string.nav_cinema),
+                            fontWeight = FontWeight.SemiBold,
+                            color = LtOnBackground,
+                        )
+                    }
+                    TextButton(onClick = onComingSoon) {
+                        Text(stringResource(R.string.nav_moments), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    TextButton(onClick = onComingSoon) {
+                        Text(stringResource(R.string.nav_lounge), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(Modifier.width(18.dp))
+                    VerticalDivider(modifier = Modifier.height(40.dp), color = LtRailSelected)
+                    Spacer(Modifier.width(16.dp))
+                }
+                IconButton(onClick = {}) {
+                    Icon(
+                        Icons.Default.FavoriteBorder,
+                        contentDescription = stringResource(R.string.nav_favorites),
+                        tint = LtPrimary,
+                    )
+                }
+                IconButton(onClick = {}) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.cd_settings),
+                        tint = LtPrimary,
+                    )
+                }
+                AvatarPlaceholder()
             }
-            TextButton(onClick = onComingSoon) {
-                Text(stringResource(R.string.nav_moments), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            TextButton(onClick = onComingSoon) {
-                Text(stringResource(R.string.nav_lounge), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.width(18.dp))
-            VerticalDivider(modifier = Modifier.height(40.dp), color = LtRailSelected)
-            Spacer(Modifier.width(16.dp))
-            IconButton(onClick = {}) {
-                Icon(
-                    Icons.Default.FavoriteBorder,
-                    contentDescription = stringResource(R.string.nav_favorites),
-                    tint = LtPrimary,
-                )
-            }
-            IconButton(onClick = {}) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = stringResource(R.string.cd_settings),
-                    tint = LtPrimary,
-                )
-            }
-            AvatarPlaceholder()
         }
     }
 }

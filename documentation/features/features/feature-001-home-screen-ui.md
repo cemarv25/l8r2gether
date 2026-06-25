@@ -21,7 +21,7 @@ Parent intake: `documentation/features/intake/home-screen-ui-intake.md`
 
 ## User Outcome
 
-Users see a home screen that feels like the provided Lume mockups in both first-run/empty and returning-user/session-list states, while existing UI actions still open the same local sheets, dialogs, and navigation callbacks.
+Users see a home screen that feels like the provided LaterTogether mockups in both first-run/empty and returning-user/session-list states, while existing UI actions still open the same local sheets, dialogs, and navigation callbacks.
 
 ## Scope
 

@@ -6,7 +6,7 @@ Feature: `documentation/features/features/feature-001-home-screen-ui.md`
 
 ## Summary
 
-Updated the shared home shell chrome to better match the supplied Lume mockups: warmer canvas/rail tokens, wider pale navigation rail, selected Cinema tile styling, top bar spacing, brand text, action icon tinting, and a UI-only avatar placeholder.
+Updated the shared home shell chrome to better match the supplied LaterTogether mockups: warmer canvas/rail tokens, wider pale navigation rail, selected Cinema tile styling, top bar spacing, brand text, action icon tinting, and a UI-only avatar placeholder.
 
 ## Files Changed
 
@@ -14,7 +14,7 @@ Updated the shared home shell chrome to better match the supplied Lume mockups: 
 - `app/src/main/java/com/l8r2gether/app/ui/shell/AppShell.kt`: adjusted snackbar offset to match the wider rail.
 - `app/src/main/java/com/l8r2gether/app/ui/shell/LtNavRail.kt`: refreshed rail width, background, selected tile, icon set, spacing, labels, and bottom Help/Favorites presentation.
 - `app/src/main/java/com/l8r2gether/app/ui/shell/LtTopBar.kt`: refreshed top bar spacing, nav text colors, divider, action icons, and added Compose avatar placeholder.
-- `app/src/main/res/values/strings.xml`: changed visible app brand to `Lume` and added profile avatar content description.
+- `app/src/main/res/values/strings.xml`: changed visible app brand to `LaterTogether` and added profile avatar content description.
 
 ## Verification
 

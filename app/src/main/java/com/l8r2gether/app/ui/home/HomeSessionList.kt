@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.l8r2gether.app.R
 import com.l8r2gether.app.ui.theme.LtCanvas
@@ -118,7 +120,7 @@ fun HomeSessionList(
                     onResume = { onResumeSession(item.contentKey) },
                     onAdjustTimestamp = { onSyncNow(item.contentKey) },
                     modifier = Modifier
-                        .fillMaxWidth(0.72f)
+                        .fillMaxWidth(0.86f)
                         .widthIn(max = 804.dp),
                 )
             }
@@ -200,110 +202,214 @@ private fun SessionCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 128.dp),
-        ) {
-            IconButton(
-                onClick = {},
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 22.dp, end = 22.dp),
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.EventNote,
-                    contentDescription = stringResource(R.string.cd_session_notes),
-                    tint = LtPrimary.copy(alpha = 0.88f),
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            Row(
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val compact = maxWidth < 680.dp
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.dp, top = 24.dp, end = 72.dp, bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .heightIn(min = if (compact) 186.dp else 128.dp),
             ) {
-                SessionThumbnail(
-                    title = item.displayTitle,
-                    contentKey = item.contentKey,
+                SessionNotesButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 22.dp, end = 22.dp),
                 )
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = item.displayTitle,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = LtInk,
-                        )
-                        Text(
-                            text = item.pauseSubtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = LtPrimary,
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (item.isMostRecent) {
-                            Button(
-                                onClick = onResume,
-                                shape = PillShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = LtPrimary,
-                                    contentColor = LtOnPrimary,
-                                ),
-                                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
-                            ) {
-                                Icon(
-                                    Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    stringResource(R.string.home_resume_session),
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
-                        } else {
-                            Button(
-                                onClick = onResume,
-                                shape = PillShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = LtContainerLow.copy(alpha = 0.72f),
-                                    contentColor = LtPrimary,
-                                ),
-                                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
-                            ) {
-                                Icon(
-                                    Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.home_resume), fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                        OutlinedButton(
-                            onClick = onAdjustTimestamp,
-                            shape = PillShape,
-                            border = BorderStroke(1.dp, LtOutline),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF5C514D)),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-                        ) {
-                            Text(
-                                stringResource(R.string.home_adjust_timestamp),
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                    }
+                if (compact) {
+                    CompactSessionCardContent(
+                        item = item,
+                        onResume = onResume,
+                        onAdjustTimestamp = onAdjustTimestamp,
+                    )
+                } else {
+                    WideSessionCardContent(
+                        item = item,
+                        onResume = onResume,
+                        onAdjustTimestamp = onAdjustTimestamp,
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WideSessionCardContent(
+    item: SessionListItemUi,
+    onResume: () -> Unit,
+    onAdjustTimestamp: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, top = 24.dp, end = 72.dp, bottom = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SessionThumbnail(
+            title = item.displayTitle,
+            contentKey = item.contentKey,
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SessionText(item)
+            SessionActions(
+                item = item,
+                onResume = onResume,
+                onAdjustTimestamp = onAdjustTimestamp,
+                compact = false,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactSessionCardContent(
+    item: SessionListItemUi,
+    onResume: () -> Unit,
+    onAdjustTimestamp: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, top = 24.dp, end = 64.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        SessionText(item)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(22.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SessionThumbnail(
+                title = item.displayTitle,
+                contentKey = item.contentKey,
+            )
+            SessionActions(
+                item = item,
+                onResume = onResume,
+                onAdjustTimestamp = onAdjustTimestamp,
+                compact = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SessionText(item: SessionListItemUi) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = item.displayTitle,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = LtInk,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = item.pauseSubtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = LtPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun SessionActions(
+    item: SessionListItemUi,
+    onResume: () -> Unit,
+    onAdjustTimestamp: () -> Unit,
+    compact: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (compact) {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            ResumeButton(item = item, onResume = onResume, modifier = Modifier.widthIn(min = 180.dp))
+            AdjustTimestampButton(onAdjustTimestamp = onAdjustTimestamp, modifier = Modifier.widthIn(min = 180.dp))
+        }
+    } else {
+        Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ResumeButton(item = item, onResume = onResume)
+            AdjustTimestampButton(onAdjustTimestamp = onAdjustTimestamp)
+        }
+    }
+}
+
+@Composable
+private fun ResumeButton(
+    item: SessionListItemUi,
+    onResume: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onResume,
+        modifier = modifier,
+        shape = PillShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (item.isMostRecent) LtPrimary else LtContainerLow.copy(alpha = 0.72f),
+            contentColor = if (item.isMostRecent) LtOnPrimary else LtPrimary,
+        ),
+        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
+    ) {
+        Icon(
+            Icons.Default.PlayArrow,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = if (item.isMostRecent) {
+                stringResource(R.string.home_resume_session)
+            } else {
+                stringResource(R.string.home_resume)
+            },
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun AdjustTimestampButton(
+    onAdjustTimestamp: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedButton(
+        onClick = onAdjustTimestamp,
+        modifier = modifier,
+        shape = PillShape,
+        border = BorderStroke(1.dp, LtOutline),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF5C514D)),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+    ) {
+        Text(
+            stringResource(R.string.home_adjust_timestamp),
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun SessionNotesButton(modifier: Modifier = Modifier) {
+    IconButton(
+        onClick = {},
+        modifier = modifier,
+    ) {
+        Icon(
+            Icons.AutoMirrored.Filled.EventNote,
+            contentDescription = stringResource(R.string.cd_session_notes),
+            tint = LtPrimary.copy(alpha = 0.88f),
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 
